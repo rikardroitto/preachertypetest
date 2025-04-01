@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predikantdiagnostik</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .question-container {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .question-text {
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        .rating {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .rating-text {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .rating-text div:first-child {
+            text-align: left;
+        }
+        .rating-text div:last-child {
+            text-align: right;
+        }
+        .rating-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            background-color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .rating-button:hover {
+            background-color: #e0e0e0;
+        }
+        .rating-button.selected {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        .submit-button {
+            display: block;
+            width: 200px;
+            margin: 30px auto;
+            padding: 12px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .submit-button:hover {
+            background-color: #1a2530;
+        }
+        .results {
+            margin-top: 40px;
+        }
+        .summary-chart {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .summary-chart h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        .bar-chart {
+            width: 100%;
+        }
+        .chart-bar {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .chart-label {
+            width: 120px;
+            text-align: right;
+            padding-right: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chart-bar-container {
+            flex-grow: 1;
+            background-color: #e0e0e0;
+            height: 25px;
+            border-radius: 4px;
+            position: relative;
+        }
+        .chart-bar-fill {
+            height: 100%;
+            background-color: #3498db;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .chart-value {
+            padding: 0 8px;
+            color: white;
+            font-weight: bold;
+        }
+        .result-item {
+            margin-bottom: 25px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result-item h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .result-item p {
+            margin-bottom: 10px;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #3498db;
+            border-radius: 4px;
+            text-align: right;
+            color: white;
+            font-weight: bold;
+            padding-right: 10px;
+            line-height: 20px;
+            transition: width 0.5s;
+        }
+        .undetermined {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Predikantdiagnostik</h1>
+    <div id="app">
+        <!-- Frågeformulär och resultat kommer att visas här -->
+    </div>
+
+    <script>
+        // Data för kategorier och frågor
+        const categories = [
+            {
+                id: 1,
+                name: "Bibelnörden",
+                description: "Bär helst grekiska lexikon under armen och citerar originaltexter med njutning. Har alltid en fotnot redo och känner ett lätt obehag om hen inte får förklara vad ordet \"δικαιοσύνη\" verkligen betyder."
+            },
+            {
+                id: 2,
+                name: "Profeten",
+                description: "Är den som \"talar sanning\" till församlingen, med eld i blicken och ett pekande finger. Budskapet handlar ofta om synd, rättvisa och dom – gärna med en svettpärla i pannan för maximal effekt."
+            },
+            {
+                id: 3,
+                name: "Berättaren",
+                description: "Trollbinder publiken med dramatiska pauser, målande detaljer och välplacerade anekdoter. Tar med lyssnaren på en resa och avslutar predikan med ett leende som säger: \"Detta var berättelsen om dig själv.\""
+            },
+            {
+                id: 4,
+                name: "Tröstaren",
+                description: "Har alltid ett öppet hjärta, mjuka ögon och en röst som omsluter lyssnaren. Hen älskar formuleringar som \"Kom till mig, du som är trött…\" och får ofta publiken att snyfta lagom mycket."
+            },
+            {
+                id: 5,
+                name: "Humoristen",
+                description: "Får församlingen att skratta högt mitt i predikan och gör evangeliet lättillgängligt med charm och glimten i ögat. En mästare på att avväpna spänning med ett oväntat skämt."
+            },
+            {
+                id: 6,
+                name: "Teologen",
+                description: "Gillar tydliga punkter (gärna tre eller fem) och förklarar svåra doktriner på begriplig nivå, men kan ibland glömma bort tiden i sin entusiasm över kyrkofädernas senaste fynd."
+            },
+            {
+                id: 7,
+                name: "Visionären",
+                description: "Predikar hellre framtid än historia, och varje predikan är en kallelse till förändring och handling. Älskar uttrycket \"vi är kallade att…\", och släpper aldrig taget om hoppet."
+            },
+            {
+                id: 8,
+                name: "Mysfarbrorn/mystanten",
+                description: "Skapar en avslappnad atmosfär med trivsamhet och personlighet. Lyssnaren känner sig hemma direkt. Gillar att ta fram kaffekoppen vid predikstolen som ett subtilt tecken på gemenskap."
+            },
+            {
+                id: 9,
+                name: "Missionären",
+                description: "Brinner för evangeliets spridning och påminner ofta om \"alla de där ute\". Predikan innehåller alltid minst en berättelse från avlägsna platser där evangeliet gör skillnad."
+            },
+            {
+                id: 10,
+                name: "Poeten",
+                description: "Älskar vackra formuleringar mer än allt annat och vill att predikan ska beröra med sin estetik. Saknar ibland förståelse för att subtila och komplexa metaforer kan vara svåra att lyssna på, men när hen träffar rätt kan det bli magiskt."
+            }
+        ];
+
+        const questions = [
+            { id: "1.1", categoryId: 1, text: "Jag tycker att en predikan blir bättre om predikanten åtminstone en gång säger vad något betyder på grekiska eller hebreiska." },
+            { id: "1.2", categoryId: 1, text: "När jag förbereder mig vill jag helst läsa minst tre olika bibelkommentarer—gärna från författare med svåruttalade namn." },
+            { id: "1.3", categoryId: 1, text: "Om jag hör någon använda ett bibelcitat ur sin kontext börjar det genast klia i fingrarna att rätta till saken." },
+            { id: "1.4", categoryId: 1, text: "Att hitta en dold ordvits eller dubbel betydelse i en biblisk text ger mig en glädje som håller i sig i flera dagar." },
+            { id: "1.5", categoryId: 1, text: "När någon nämner 'grundtexten' lyser mina ögon upp och jag känner genast ett varmt pirr i magen." },
+            { id: "2.1", categoryId: 2, text: "En riktigt bra predikan måste skaka om lyssnaren lite – annars har man inte gjort sitt jobb." },
+            { id: "2.2", categoryId: 2, text: "Jag känner ofta att kyrkan borde vara modigare med att kritisera samhällets orättvisor och hyckleri." },
+            { id: "2.3", categoryId: 2, text: "Det är viktigare för mig att säga det jag upplever är sant än att alla i publiken går hem glada och nöjda." },
+            { id: "2.4", categoryId: 2, text: "Jag kan känna ett slags profetisk vrede över kyrkans bekvämlighet och passivitet." },
+            { id: "2.5", categoryId: 2, text: "Om ingen tar illa upp efter min predikan undrar jag om jag verkligen sa något viktigt överhuvudtaget." },
+            { id: "3.1", categoryId: 3, text: "En bra berättelse kan säga mer än tio välformulerade argument." },
+            { id: "3.2", categoryId: 3, text: "Jag känner en genuin tillfredsställelse när jag lyckas skapa dramatik i min predikan genom en perfekt paus eller ett överraskande avslöjande." },
+            { id: "3.3", categoryId: 3, text: "Jag tänker ofta i bilder och berättelser när jag förbereder predikan, snarare än i teologiska punkter." },
+            { id: "3.4", categoryId: 3, text: "En av mina viktigaste gåvor som predikant är att få bibelns berättelser att kännas levande och aktuella för lyssnaren." },
+            { id: "3.5", categoryId: 3, text: "Jag skulle hellre predika helt utan manus än helt utan möjlighet att använda berättelser." },
+            { id: "4.1", categoryId: 4, text: "Det viktigaste med en predikan är att lyssnaren går därifrån med en känsla av hopp och tröst." },
+            { id: "4.2", categoryId: 4, text: "Mina predikningar innehåller ofta uttryck som 'Gud bär dig', 'du är inte ensam', och 'det finns nåd för varje dag'." },
+            { id: "4.3", categoryId: 4, text: "Jag föredrar att tala mjukt och varmt snarare än att argumentera skarpt och utmanande." },
+            { id: "4.4", categoryId: 4, text: "När jag ser någon i publiken som är ledsen eller sårbar får jag direkt lust att rikta mina ord särskilt till den personen." },
+            { id: "4.5", categoryId: 4, text: "Jag upplever att min viktigaste roll som predikant är att visa på Guds närvaro mitt i människors smärta och vardag." },
+            { id: "5.1", categoryId: 5, text: "En predikan utan skratt är som kaffe utan koffein—det känns helt enkelt lite meningslöst." },
+            { id: "5.2", categoryId: 5, text: "Jag använder gärna humor för att lätta upp stämningen, även när ämnet är allvarligt." },
+            { id: "5.3", categoryId: 5, text: "Jag uppskattar när publiken småfnissar eller skrattar högt under predikan—det är ett tecken på kontakt." },
+            { id: "5.4", categoryId: 5, text: "Jag kan ibland komma på mig själv med att leta efter en rolig illustration eller poäng nästan mer än efter det djupt teologiska." },
+            { id: "5.5", categoryId: 5, text: "En av mina största styrkor är att kunna presentera evangeliet med glimten i ögat och en rejäl dos självdistans." },
+            { id: "6.1", categoryId: 6, text: "En riktigt bra predikan kräver en noggrant strukturerad disposition med tydliga punkter och underrubriker." },
+            { id: "6.2", categoryId: 6, text: "Jag kan bli entusiastisk över att förklara avancerade teologiska begrepp på ett sätt som alla kan förstå." },
+            { id: "6.3", categoryId: 6, text: "När jag hör en förenklad eller felaktig förklaring av en teologisk lära känner jag nästan ett ansvar att rätta till det." },
+            { id: "6.4", categoryId: 6, text: "Min predikoförberedelse innefattar ofta minst ett par timmar med teologiska referensverk eller läroböcker." },
+            { id: "6.5", categoryId: 6, text: "Det ger mig tillfredsställelse att se församlingen växa i sin förståelse av den kristna tron genom mina predikningar." },
+            { id: "7.1", categoryId: 7, text: "En predikan ska väcka drömmar, hopp och en känsla av att förändring är möjlig." },
+            { id: "7.2", categoryId: 7, text: "Jag känner mig inspirerad när jag kan måla upp en vision av kyrkans eller församlingens framtid och potential." },
+            { id: "7.3", categoryId: 7, text: "Jag använder ofta uttryck som 'vi är kallade att...' eller 'tänk om vi kunde...' i mina predikningar." },
+            { id: "7.4", categoryId: 7, text: "Det viktigaste är inte var vi står idag, utan vart vi är på väg." },
+            { id: "7.5", categoryId: 7, text: "Jag tror att min uppgift som predikant är att inspirera människor att agera för att förändra världen och kyrkan till det bättre." },
+            { id: "8.1", categoryId: 8, text: "Att skapa en varm och trivsam atmosfär är lika viktigt som själva innehållet i predikan." },
+            { id: "8.2", categoryId: 8, text: "Jag tycker om att tala vardagligt och avslappnat, så att folk känner sig hemma när jag predikar." },
+            { id: "8.3", categoryId: 8, text: "Om någon i församlingen tar fram kaffekoppen under min predikan ser jag det som ett gott tecken." },
+            { id: "8.4", categoryId: 8, text: "Jag är glad om mina predikningar känns som ett vänskapligt samtal snarare än ett formellt föredrag." },
+            { id: "8.5", categoryId: 8, text: "För mig är det viktigt att vara personlig och gärna bjuda på mig själv för att skapa gemenskap med lyssnarna." },
+            { id: "9.1", categoryId: 9, text: "En predikan känns ofullständig om den inte på något sätt nämner behovet av att nå ut till människor utanför kyrkan." },
+            { id: "9.2", categoryId: 9, text: "Jag återkommer gärna till berättelser från andra länder eller sammanhang där evangeliet förändrar människors liv." },
+            { id: "9.3", categoryId: 9, text: "När jag predikar känner jag ofta ett ansvar att väcka församlingens missionsglöd." },
+            { id: "9.4", categoryId: 9, text: "Det är viktigt att påminna församlingen om att vi existerar minst lika mycket för de människor som ännu inte hittat till kyrkan." },
+            { id: "9.5", categoryId: 9, text: "Jag vill alltid betona att evangeliet är en gåva att dela vidare – inte något vi håller för oss själva." },
+            { id: "10.1", categoryId: 10, text: "En predikan utan vackra metaforer och poetiska formuleringar är som en tavla utan färger." },
+            { id: "10.2", categoryId: 10, text: "Jag kan bli mer nöjd över en riktigt elegant och subtil formulering än över att budskapet är helt klart för lyssnaren." },
+            { id: "10.3", categoryId: 10, text: "Det händer att jag njuter av att läsa poesi eller lyrik för att få inspiration till mina predikningar." },
+            { id: "10.4", categoryId: 10, text: "Jag älskar att använda symboliska bilder och komplexa metaforer för att låta lyssnaren ana budskapet snarare än att slå fast det tydligt." },
+            { id: "10.5", categoryId: 10, text: "Det viktigaste för mig är att predikan berör estetiskt och känslomässigt—även om alla kanske inte exakt förstår vad jag menar." }
+        ];
+
+        // Slumpa frågorna
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Skapa applikationen
+        class PredicantDiagnostic {
+            constructor() {
+                this.appElement = document.getElementById('app');
+                this.questions = shuffleArray([...questions]);
+                this.answers = {};
+                this.showingResults = false;
+                
+                this.render();
+            }
+
+            render() {
+                if (this.showingResults) {
+                    this.renderResults();
+                } else {
+                    this.renderQuestions();
+                }
+            }
+
+            renderQuestions() {
+                let html = '<div class="questions">';
+                
+                this.questions.forEach((question, index) => {
+                    const selectedRating = this.answers[question.id] || null;
+                    
+                    html += `
+                        <div class="question-container">
+                            <div class="question-text">${question.text}</div>
+                            <div class="rating-text">
+                                <div>Håller inte alls med</div>
+                                <div>Håller med fullständigt</div>
+                            </div>
+                            <div class="rating">
+                                ${[1, 2, 3, 4, 5, 6, 7].map(rating => `
+                                    <button 
+                                        class="rating-button ${selectedRating === rating ? 'selected' : ''}" 
+                                        onclick="app.setAnswer('${question.id}', ${rating})"
+                                    >
+                                        ${rating}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    <button class="submit-button" onclick="app.showResults()">Visa resultat</button>
+                    </div>
+                `;
+                
+                this.appElement.innerHTML = html;
+            }
+
+            setAnswer(questionId, rating) {
+                this.answers[questionId] = rating;
+                this.render();
+            }
+
+            calculateResults() {
+                const results = {};
+                
+                // Initiera resultaten
+                categories.forEach(category => {
+                    results[category.id] = {
+                        category: category,
+                        totalPoints: 0,
+                        maxPoints: 0,
+                        percentage: 0,
+                        answeredQuestions: 0
+                    };
+                });
+                
+                // Räkna poäng för varje kategori
+                Object.entries(this.answers).forEach(([questionId, rating]) => {
+                    const question = questions.find(q => q.id === questionId);
+                    if (question) {
+                        const categoryId = question.categoryId;
+                        results[categoryId].totalPoints += rating;
+                        results[categoryId].maxPoints += 7; // Max poäng per fråga
+                        results[categoryId].answeredQuestions += 1;
+                    }
+                });
+                
+                // Beräkna procentandel för varje kategori
+                Object.values(results).forEach(result => {
+                    if (result.answeredQuestions > 0) {
+                        result.percentage = Math.round((result.totalPoints / result.maxPoints) * 100);
+                    } else {
+                        result.percentage = null; // Odefinierad om inga frågor besvarats
+                    }
+                });
+                
+                // Sortera efter procent (högst först)
+                return Object.values(results).sort((a, b) => {
+                    // Om någon är odefinierad
+                    if (a.percentage === null && b.percentage === null) return 0;
+                    if (a.percentage === null) return 1;
+                    if (b.percentage === null) return -1;
+                    
+                    return b.percentage - a.percentage;
+                });
+            }
+
+            renderResults() {
+                const results = this.calculateResults();
+                
+                let html = `
+                    <div class="results">
+                `;
+                
+                // Kompakt stapeldiagram överst
+                html += `
+                    <div class="summary-chart">
+                        <h2>Sammanfattning av resultat</h2>
+                        <div class="bar-chart">
+                `;
+                
+                // Filtrera bort odefinierade resultat för stapeldiagrammet
+                const definedResults = results.filter(result => result.percentage !== null);
+                
+                definedResults.forEach(result => {
+                    html += `
+                        <div class="chart-bar">
+                            <div class="chart-label">${result.category.name}</div>
+                            <div class="chart-bar-container">
+                                <div class="chart-bar-fill" style="width: ${result.percentage}%">
+                                    <span class="chart-value">${result.percentage}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                    
+                    <h2>Detaljerade resultat</h2>
+                `;
+                
+                // Detaljerade resultat som tidigare
+                results.forEach(result => {
+                    if (result.percentage !== null) {
+                        html += `
+                            <div class="result-item">
+                                <h3>${result.category.name}</h3>
+                                <p><strong>${result.percentage}%</strong> (${result.totalPoints} av ${result.maxPoints} poäng)</p>
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: ${result.percentage}%">${result.percentage}%</div>
+                                </div>
+                                <p>${result.category.description}</p>
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div class="result-item">
+                                <h3>${result.category.name}</h3>
+                                <p class="undetermined">Inga frågor besvarade i denna kategori</p>
+                                <p>${result.category.description}</p>
+                            </div>
+                        `;
+                    }
+                });
+                
+                html += `
+                    <button class="submit-button" onclick="app.backToQuestions()">Tillbaka till frågorna</button>
+                    </div>
+                `;
+                
+                this.appElement.innerHTML = html;
+            }
+
+            showResults() {
+                this.showingResults = true;
+                this.render();
+                window.scrollTo(0, 0);
+            }
+
+            backToQuestions() {
+                this.showingResults = false;
+                this.render();
+                window.scrollTo(0, 0);
+            }
+        }
+
+        // Starta applikationen
+        let app = new PredicantDiagnostic();
+        window.app = app; // Exponera för onclick-händelser
+    </script>
+</body>
+</html>
